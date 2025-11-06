@@ -1,0 +1,151 @@
+{% extends 'Admin/base_admin.html' %}
+
+{% block title %}{% if movie %}Edit{% else %}Create{% endif %} Movie - Admin{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if movie %}pencil{% else %}plus-circle{% endif %}"></i>
+                        {% if movie %}Edit{% else %}Create New{% endif %} Movie
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger">{{ form.title.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.genre.id_for_label }}" class="form-label">Genre *</label>
+                                {{ form.genre }}
+                                {% if form.genre.errors %}
+                                    <div class="text-danger">{{ form.genre.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description *</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.director.id_for_label }}" class="form-label">Director *</label>
+                                {{ form.director }}
+                                {% if form.director.errors %}
+                                    <div class="text-danger">{{ form.director.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.cast.id_for_label }}" class="form-label">Cast *</label>
+                                {{ form.cast }}
+                                {% if form.cast.errors %}
+                                    <div class="text-danger">{{ form.cast.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.duration.id_for_label }}" class="form-label">Duration (min) *</label>
+                                {{ form.duration }}
+                                {% if form.duration.errors %}
+                                    <div class="text-danger">{{ form.duration.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.release_date.id_for_label }}" class="form-label">Release Date *</label>
+                                {{ form.release_date }}
+                                {% if form.release_date.errors %}
+                                    <div class="text-danger">{{ form.release_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.rating.id_for_label }}" class="form-label">Rating (0-10) *</label>
+                                {{ form.rating }}
+                                {% if form.rating.errors %}
+                                    <div class="text-danger">{{ form.rating.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.ticket_price.id_for_label }}" class="form-label">Ticket Price *</label>
+                                {{ form.ticket_price }}
+                                {% if form.ticket_price.errors %}
+                                    <div class="text-danger">{{ form.ticket_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.available_seats.id_for_label }}" class="form-label">Available Seats *</label>
+                                {{ form.available_seats }}
+                                {% if form.available_seats.errors %}
+                                    <div class="text-danger">{{ form.available_seats.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Status *</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.trailer_url.id_for_label }}" class="form-label">Trailer URL</label>
+                            {{ form.trailer_url }}
+                            {% if form.trailer_url.errors %}
+                                <div class="text-danger">{{ form.trailer_url.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.poster.id_for_label }}" class="form-label">Movie Poster</label>
+                            {{ form.poster }}
+                            {% if form.poster.errors %}
+                                <div class="text-danger">{{ form.poster.errors }}</div>
+                            {% endif %}
+                            {% if movie.poster %}
+                                <div class="mt-2">
+                                    <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="img-thumbnail" style="max-height: 150px;">
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save"></i> {% if movie %}Update{% else %}Create{% endif %} Movie
+                            </button>
+                            <a href="{% url 'manage_movies' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Movies
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

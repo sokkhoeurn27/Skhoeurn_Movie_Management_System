@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Movies - Movie Management System{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4"><i class="bi bi-film"></i> All Movies</h2>
+    
+    <!-- Search and Filter -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-8">
+                    {{ form.search }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.genre }}
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Movies Grid -->
+    <div class="row">
+        {% for movie in movies %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card shadow h-100">
+                {% if movie.poster %}
+                    <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 350px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 350px;">
+                        <i class="bi bi-film" style="font-size: 3rem;"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ movie.title }}</h5>
+                    <p class="card-text">
+                        <span class="badge bg-info">{{ movie.genre.name }}</span><br>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> {{ movie.duration }} min<br>
+                            <i class="bi bi-star-fill text-warning"></i> {{ movie.rating }}/10
+                        </small>
+                    </p>
+                    <p class="text-success fw-bold">${{ movie.ticket_price }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'movie_detail' movie.id %}" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-info-circle"></i> Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No movies found matching your criteria.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

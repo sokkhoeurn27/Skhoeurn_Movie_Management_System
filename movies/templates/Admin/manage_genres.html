@@ -1,0 +1,91 @@
+{% extends 'Admin/base_admin.html' %}
+
+{% block title %}Manage Genres - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-tags"></i> Manage Genres</h2>
+        <a href="{% url 'create_genre' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Genre
+        </a>
+    </div>
+    
+    <div class="card shadow mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Search by name or description..." value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+                {% if search_query %}
+                <div class="col-12">
+                    <a href="{% url 'manage_genres' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Clear Search
+                    </a>
+                    <span class="text-muted ms-2">Showing results for: <strong>"{{ search_query }}"</strong></span>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Movies Count</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for genre in genres %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary fs-6">{{ genre.name }}</span>
+                            </td>
+                            <td>{{ genre.description|truncatewords:15|default:"No description" }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ genre.movies.count }} movie{{ genre.movies.count|pluralize }}</span>
+                            </td>
+                            <td class="text-muted small">{{ genre.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'edit_genre' genre.id %}" class="btn btn-sm btn-warning" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'delete_genre' genre.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this genre?')" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                {% if search_query %}
+                                    No genres found matching "{{ search_query }}"
+                                {% else %}
+                                    No genres found. Create one to get started!
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

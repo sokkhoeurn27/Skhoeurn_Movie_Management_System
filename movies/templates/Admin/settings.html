@@ -1,0 +1,158 @@
+{% extends 'Admin/base_admin.html' %}
+
+{% block title %}Settings - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="bi bi-gear"></i> Settings</h2>
+    
+    <!-- System Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> System Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-film text-primary me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Movies</h6>
+                                    <h3 class="mb-0">{{ total_movies }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-people text-success me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Users</h6>
+                                    <h3 class="mb-0">{{ total_users }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-shield-check text-warning me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Admins</h6>
+                                    <h3 class="mb-0">{{ total_admins }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tags text-info me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Genres</h6>
+                                    <h3 class="mb-0">{{ total_genres }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-ticket-perforated text-danger me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Bookings</h6>
+                                    <h3 class="mb-0">{{ total_bookings }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-star text-warning me-3" style="font-size: 2rem;"></i>
+                                <div>
+                                    <h6 class="text-muted mb-0">Total Reviews</h6>
+                                    <h3 class="mb-0">{{ total_reviews }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Settings -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Account Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted">Username</label>
+                        <p class="h5">{{ user.username }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted">Email</label>
+                        <p class="h5">{{ user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted">Role</label>
+                        <p class="h5"><span class="badge bg-danger">{{ user.get_role_display }}</span></p>
+                    </div>
+                    <a href="{% url 'profile' %}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted">Account Created</label>
+                        <p class="h6">{{ user.created_at|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted">Last Updated</label>
+                        <p class="h6">{{ user.updated_at|date:"F d, Y" }}</p>
+                    </div>
+                    <a href="{% url 'profile' %}" class="btn btn-warning">
+                        <i class="bi bi-key"></i> Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> System Actions</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Manage critical system operations</p>
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <button class="btn btn-outline-danger w-100" onclick="alert('Clear cache functionality coming soon!')">
+                                <i class="bi bi-trash"></i> Clear Cache
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <button class="btn btn-outline-info w-100" onclick="alert('Database backup functionality coming soon!')">
+                                <i class="bi bi-database"></i> Backup Database
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <button class="btn btn-outline-warning w-100" onclick="alert('System logs functionality coming soon!')">
+                                <i class="bi bi-file-earmark-text"></i> View Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'Admin/base_admin.html' %}
+{% block title %}Manage Reviews - Admin{% endblock %}
+{% block content %}
+<div class="container-fluid my-4">
+    <h2 class="mb-4"><i class="bi bi-star"></i> Manage Reviews</h2>
+    <div class="card shadow">
+        <div class="card-body">
+            {% for review in reviews %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>{{ review.user.username }} - {{ review.movie.title }}</h6>
+                            <div class="mb-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p>{{ review.comment }}</p>
+                            <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No reviews found.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

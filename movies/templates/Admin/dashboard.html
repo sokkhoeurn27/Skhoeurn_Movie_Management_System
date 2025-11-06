@@ -1,0 +1,351 @@
+{% extends 'Admin/base_admin.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-speedometer2"></i> Dashboard Overview</h2>
+            <p class="text-muted mb-0">Welcome back, {{ user.username }}!</p>
+        </div>
+        <div class="text-muted">
+            <i class="bi bi-calendar3"></i> {% now "F d, Y" %}
+        </div>
+    </div>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="bi bi-film fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <h2 class="mb-0 fw-bold">{{ total_movies }}</h2>
+                            <p class="mb-0 opacity-75">Total Movies</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-white bg-opacity-25 me-2">
+                            <i class="bi bi-{% if movies_growth >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                            {{ movies_growth }}%
+                        </span>
+                        <small class="opacity-75">from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="bi bi-people fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <h2 class="mb-0 fw-bold">{{ total_users }}</h2>
+                            <p class="mb-0 opacity-75">Total Users</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-white bg-opacity-25 me-2">
+                            <i class="bi bi-{% if users_growth >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                            {{ users_growth }}%
+                        </span>
+                        <small class="opacity-75">from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="bi bi-star fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <h2 class="mb-0 fw-bold">{{ total_reviews }}</h2>
+                            <p class="mb-0 opacity-75">Total Reviews</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-white bg-opacity-25 me-2">
+                            <i class="bi bi-{% if reviews_growth >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                            {{ reviews_growth }}%
+                        </span>
+                        <small class="opacity-75">from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="bi bi-ticket-perforated fs-3"></i>
+                        </div>
+                        <div class="text-end">
+                            <h2 class="mb-0 fw-bold">{{ total_bookings }}</h2>
+                            <p class="mb-0 opacity-75">Total Bookings</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-white bg-opacity-25 me-2">
+                            <i class="bi bi-hourglass-split"></i>
+                            {{ pending_bookings }}
+                        </span>
+                        <small class="opacity-75">pending</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up text-primary"></i> Monthly Activity</h5>
+                    <small class="text-muted">Bookings and Reviews trends</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyActivityChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-pie-chart text-success"></i> Movies by Genre</h5>
+                    <small class="text-muted">Distribution</small>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="genreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-star-fill text-warning"></i> Rating Distribution</h5>
+                    <small class="text-muted">Review ratings breakdown</small>
+                </div>
+                <div class="card-body">
+                    <canvas id="ratingChart" height="60"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-film text-primary"></i> Recent Movies</h5>
+                        <small class="text-muted">Latest added</small>
+                    </div>
+                    <a href="{% url 'manage_movies' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Title</th>
+                                    <th>Genre</th>
+                                    <th>Status</th>
+                                    <th class="pe-3">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movie in recent_movies %}
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-film-play text-primary me-2"></i>
+                                            <strong>{{ movie.title }}</strong>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ movie.genre.name }}</span></td>
+                                    <td>
+                                        <span class="badge {% if movie.status == 'now_showing' %}bg-success{% elif movie.status == 'coming_soon' %}bg-info{% else %}bg-secondary{% endif %}">
+                                            {{ movie.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-3 text-muted small">{{ movie.created_at|date:"M d" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                        No movies yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-chat-quote text-warning"></i> Recent Reviews</h5>
+                        <small class="text-muted">Latest user reviews</small>
+                    </div>
+                    <a href="{% url 'manage_reviews' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for review in recent_reviews %}
+                        <div class="list-group-item border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">{{ review.movie.title }}</h6>
+                                    <p class="mb-1 text-muted small">
+                                        <i class="bi bi-person-circle"></i> {{ review.user.username }}
+                                    </p>
+                                </div>
+                                <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                            </div>
+                            <div class="mb-2">
+                                {% for i in "12345" %}
+                                    <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %} text-warning"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="mb-0 text-muted small">{{ review.comment|truncatewords:20 }}</p>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item border-0 text-center text-muted py-5">
+                            <i class="bi bi-chat-square-quote fs-1 d-block mb-2"></i>
+                            No reviews yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.color = '#6c757d';
+
+const monthlyData = {{ monthly_activity|safe }};
+new Chart(document.getElementById('monthlyActivityChart'), {
+    type: 'line',
+    data: {
+        labels: monthlyData.map(d => d.month),
+        datasets: [{
+            label: 'Bookings',
+            data: monthlyData.map(d => d.bookings),
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#667eea',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }, {
+            label: 'Reviews',
+            data: monthlyData.map(d => d.reviews),
+            borderColor: '#f5576c',
+            backgroundColor: 'rgba(245, 87, 108, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#f5576c',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, padding: 15, font: { size: 13, weight: 'bold' } } },
+            tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, cornerRadius: 8 }
+        },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+const genreData = {{ movies_by_genre|safe }};
+if (genreData.length > 0) {
+    new Chart(document.getElementById('genreChart'), {
+        type: 'doughnut',
+        data: {
+            labels: genreData.map(d => d.genre),
+            datasets: [{
+                data: genreData.map(d => d.count),
+                backgroundColor: ['#667eea', '#f5576c', '#4facfe', '#fa709a', '#00f2fe', '#fee140', '#764ba2', '#f093fb'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'right', labels: { padding: 12, font: { size: 12 }, usePointStyle: true } },
+                tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, cornerRadius: 8 }
+            }
+        }
+    });
+}
+
+const ratingData = {{ rating_distribution|safe }};
+new Chart(document.getElementById('ratingChart'), {
+    type: 'bar',
+    data: {
+        labels: ratingData.map(d => d.rating),
+        datasets: [{
+            label: 'Reviews',
+            data: ratingData.map(d => d.count),
+            backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 159, 64, 0.8)', 'rgba(255, 205, 86, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(54, 162, 235, 0.8)'],
+            borderColor: ['rgb(255, 99, 132)', 'rgb(255, 159, 64)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)', 'rgb(54, 162, 235)'],
+            borderWidth: 2,
+            borderRadius: 8,
+            barThickness: 60
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, cornerRadius: 8 } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+</script>
+{% endblock %}
