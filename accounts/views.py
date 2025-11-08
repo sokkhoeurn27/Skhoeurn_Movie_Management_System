@@ -20,10 +20,14 @@ def register_view(request):
             user.role = 'user'  # Automatically set to 'user' for public registration
             user.save()
             messages.success(request, 'Account created successfully! Please login.')
-            return redirect('login')
+            # Redirect to home with a flag to open login modal
+            return redirect('home')
         else:
             # Form errors will be displayed in the template
-            messages.error(request, 'Please correct the errors below.')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+            return redirect('home')
     else:
         form = RegisterForm()
     
@@ -69,25 +73,54 @@ def logout_view(request):
     """
     logout(request)
     messages.success(request, 'You have been logged out successfully!')
-    return redirect('login')
+    return redirect('home')
 
 
 @login_required
 def profile_view(request):
     """
-    User profile view
+    User profile view - Shows only user information
+    Redirects admins to their dedicated profile page
     """
     user = request.user
-    bookings = user.bookings.all().order_by('-booking_date')[:5]
-    reviews = user.reviews.all().order_by('-created_at')[:5]
+    
+    # Redirect admins to admin profile
+    if user.is_admin():
+        return redirect('admin_profile')
     
     context = {
         'user': user,
-        'bookings': bookings,
-        'reviews': reviews,
     }
     
     return render(request, 'profile.html', context)
+
+
+@login_required
+def my_bookings_view(request):
+    """
+    User bookings view - Shows all user bookings
+    """
+    bookings = request.user.bookings.all().order_by('-booking_date')
+    
+    context = {
+        'bookings': bookings,
+    }
+    
+    return render(request, 'my_bookings.html', context)
+
+
+@login_required
+def my_reviews_view(request):
+    """
+    User reviews view - Shows all user reviews
+    """
+    reviews = request.user.reviews.all().order_by('-created_at')
+    
+    context = {
+        'reviews': reviews,
+    }
+    
+    return render(request, 'my_reviews.html', context)
 
 
 @login_required

@@ -3,100 +3,65 @@
 {% block title %}Profile - {{ user.username }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Profile Information</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Username:</strong> {{ user.username }}</p>
-                    <p><strong>Email:</strong> {{ user.email }}</p>
-                    <p><strong>Role:</strong> 
-                        <span class="badge bg-{% if user.is_admin %}danger{% else %}info{% endif %}">
-                            {{ user.get_role_display }}
-                        </span>
-                    </p>
-                    <p><strong>Joined:</strong> {{ user.created_at|date:"M d, Y" }}</p>
-                    
-                    <hr>
-                    
-                    <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="bi bi-pencil"></i> Edit Profile
-                    </button>
-                </div>
-            </div>
-        </div>
-        
+<div class="container my-5">
+    <div class="row justify-content-center">
         <div class="col-md-8">
-            <!-- Recent Bookings -->
-            <div class="card shadow mb-3">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-ticket-perforated"></i> Recent Bookings</h5>
+            <div class="card shadow-lg" style="border-radius: 15px;">
+                <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px 15px 0 0;">
+                    <i class="bi bi-person-circle" style="font-size: 5rem;"></i>
+                    <h3 class="mt-3 mb-0">{{ user.username }}</h3>
+                    <p class="mb-0">{{ user.email }}</p>
                 </div>
-                <div class="card-body">
-                    {% if bookings %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Movie</th>
-                                        <th>Show Date</th>
-                                        <th>Seats</th>
-                                        <th>Total</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for booking in bookings %}
-                                    <tr>
-                                        <td>{{ booking.movie.title }}</td>
-                                        <td>{{ booking.show_date }} {{ booking.show_time }}</td>
-                                        <td>{{ booking.number_of_seats }}</td>
-                                        <td>${{ booking.total_price }}</td>
-                                        <td>
-                                            <span class="badge bg-{% if booking.status == 'confirmed' %}success{% elif booking.status == 'pending' %}warning{% else %}danger{% endif %}">
-                                                {{ booking.get_status_display }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">No bookings yet.</p>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Recent Reviews -->
-            <div class="card shadow">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="bi bi-star-fill"></i> Recent Reviews</h5>
-                </div>
-                <div class="card-body">
-                    {% if reviews %}
-                        {% for review in reviews %}
-                        <div class="mb-3 pb-3 border-bottom">
-                            <h6>{{ review.movie.title }}</h6>
-                            <div class="mb-1">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}
-                                        <i class="bi bi-star-fill text-warning"></i>
-                                    {% else %}
-                                        <i class="bi bi-star text-warning"></i>
-                                    {% endif %}
-                                {% endfor %}
+                <div class="card-body p-4">
+                    <h5 class="mb-4"><i class="bi bi-info-circle-fill text-primary"></i> Account Information</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1"><small>USERNAME</small></p>
+                                <h6 class="mb-0">{{ user.username }}</h6>
                             </div>
-                            <p class="mb-1">{{ review.comment }}</p>
-                            <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted">No reviews yet.</p>
-                    {% endif %}
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1"><small>EMAIL ADDRESS</small></p>
+                                <h6 class="mb-0">{{ user.email }}</h6>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1"><small>ACCOUNT ROLE</small></p>
+                                <h6 class="mb-0">
+                                    <span class="badge bg-{% if user.is_admin %}danger{% else %}success{% endif %}" style="font-size: 0.9rem;">
+                                        {{ user.get_role_display }}
+                                    </span>
+                                </h6>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <p class="text-muted mb-1"><small>MEMBER SINCE</small></p>
+                                <h6 class="mb-0">{{ user.created_at|date:"F d, Y" }}</h6>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                        </button>
+                        <a href="{% url 'my_bookings' %}" class="btn btn-outline-success btn-lg">
+                            <i class="bi bi-ticket-perforated"></i> View My Bookings
+                        </a>
+                        <a href="{% url 'my_reviews' %}" class="btn btn-outline-warning btn-lg">
+                            <i class="bi bi-star-fill"></i> View My Reviews
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

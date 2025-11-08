@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Avg
-from .models import Movie, Genre, Booking, Review
+from django.http import JsonResponse
+from .models import Movie, Genre, Booking, Review, SiteSetting
 from .forms import MovieForm, GenreForm, BookingForm, ReviewForm, BookingStatusForm, MovieSearchForm
 from accounts.models import Account
 from accounts.forms import AdminCreateAccountForm, AdminEditAccountForm
@@ -14,11 +15,22 @@ def home_view(request):
     """
     Home page - show featured movies
     """
+    # Get featured movie (highest rated now showing movie with trailer)
+    featured_movie = Movie.objects.filter(
+        status='now_showing', 
+        trailer_url__isnull=False
+    ).exclude(trailer_url='').order_by('-rating', '-created_at').first()
+    
+    # If no featured movie with trailer, get the latest now showing movie as fallback
+    if not featured_movie:
+        featured_movie = Movie.objects.filter(status='now_showing').order_by('-rating', '-created_at').first()
+    
     now_showing = Movie.objects.filter(status='now_showing').order_by('-created_at')[:6]
     coming_soon = Movie.objects.filter(status='coming_soon').order_by('release_date')[:3]
     genres = Genre.objects.all()
     
     context = {
+        'featured_movie': featured_movie,
         'now_showing': now_showing,
         'coming_soon': coming_soon,
         'genres': genres,
@@ -34,6 +46,14 @@ def movie_list_view(request):
     movies = Movie.objects.filter(status='now_showing')
     genres = Genre.objects.all()
     
+    # Check for genre parameter in URL
+    genre_id = request.GET.get('genre')
+    if genre_id:
+        try:
+            movies = movies.filter(genre_id=genre_id)
+        except (ValueError, Genre.DoesNotExist):
+            pass
+    
     form = MovieSearchForm(request.GET)
     
     if form.is_valid():
@@ -46,7 +66,7 @@ def movie_list_view(request):
                 Q(cast__icontains=search_query)
             )
         
-        # Filter by genre
+        # Filter by genre from form
         genre = form.cleaned_data.get('genre')
         if genre:
             movies = movies.filter(genre=genre)
@@ -64,13 +84,23 @@ def movie_detail_view(request, movie_id):
     Movie detail page with reviews
     """
     movie = get_object_or_404(Movie, id=movie_id)
-    reviews = movie.reviews.all().order_by('-created_at')
+    
+    # Get site settings
+    settings = SiteSetting.get_settings()
+    
+    # Only show approved reviews (or all if approval not required)
+    if settings.require_approval:
+        reviews = movie.reviews.filter(is_approved=True).order_by('-created_at')
+    else:
+        reviews = movie.reviews.all().order_by('-created_at')
+    
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
     
     context = {
         'movie': movie,
         'reviews': reviews,
         'avg_rating': avg_rating,
+        'enable_review': settings.enable_review,
     }
     
     return render(request, 'User/movie_detail.html', context)
@@ -107,7 +137,7 @@ def book_movie_view(request, movie_id):
             movie.save()
             
             messages.success(request, 'Booking confirmed successfully!')
-            return redirect('profile')
+            return redirect('my_bookings')
     else:
         form = BookingForm()
     
@@ -124,31 +154,60 @@ def review_movie_view(request, movie_id):
     """
     Add or edit movie review
     """
+    # Check if reviews are enabled
+    settings = SiteSetting.get_settings()
+    if not settings.enable_review:
+        messages.error(request, 'Reviews are currently disabled by the administrator.')
+        return redirect('movie_detail', movie_id=movie_id)
+    
     movie = get_object_or_404(Movie, id=movie_id)
     
     # Check if user already reviewed this movie
     existing_review = Review.objects.filter(user=request.user, movie=movie).first()
     
+    # Get the redirect URL from the query parameter or referer
+    redirect_url = request.GET.get('next', None)
+    
     if request.method == 'POST':
+        # Also check POST data for next parameter
+        redirect_url = request.POST.get('next', request.GET.get('next', None))
         form = ReviewForm(request.POST, instance=existing_review)
         if form.is_valid():
             review = form.save(commit=False)
             review.user = request.user
             review.movie = movie
+            
+            # Set approval status based on settings
+            if settings.require_approval:
+                review.is_approved = False
+            else:
+                review.is_approved = True
+            
             review.save()
             
             if existing_review:
-                messages.success(request, 'Review updated successfully!')
+                if settings.require_approval:
+                    messages.success(request, 'Review updated successfully! It will be visible after admin approval.')
+                else:
+                    messages.success(request, 'Review updated successfully!')
             else:
-                messages.success(request, 'Review added successfully!')
+                if settings.require_approval:
+                    messages.success(request, 'Review submitted successfully! It will be visible after admin approval.')
+                else:
+                    messages.success(request, 'Review added successfully!')
             
-            return redirect('movie_detail', movie_id=movie_id)
+            # Redirect based on next parameter or default to movie detail
+            if redirect_url:
+                return redirect(redirect_url)
+            else:
+                return redirect('movie_detail', movie_id=movie_id)
     else:
         form = ReviewForm(instance=existing_review)
     
     context = {
         'movie': movie,
         'form': form,
+        'redirect_url': redirect_url,
         'existing_review': existing_review,
     }
     
@@ -278,6 +337,34 @@ def admin_dashboard(request):
 
 
 @login_required
+def admin_profile(request):
+    """
+    Admin profile view - Shows admin account information
+    """
+    if not request.user.is_admin():
+        messages.error(request, 'Access denied! Admin only.')
+        return redirect('home')
+    
+    user = request.user
+    
+    # Get admin statistics
+    total_movies = Movie.objects.count()
+    total_users = Account.objects.filter(role='user').count()
+    total_bookings = Booking.objects.count()
+    total_reviews = Review.objects.count()
+    
+    context = {
+        'user': user,
+        'total_movies': total_movies,
+        'total_users': total_users,
+        'total_bookings': total_bookings,
+        'total_reviews': total_reviews,
+    }
+    
+    return render(request, 'Admin/admin_profile.html', context)
+
+
+@login_required
 def manage_movies(request):
     """
     Admin - Manage all movies
@@ -287,6 +374,7 @@ def manage_movies(request):
         return redirect('home')
     
     movies = Movie.objects.all().order_by('-created_at')
+    genres = Genre.objects.all().order_by('name')
     
     # Search functionality
     search_query = request.GET.get('search', '')
@@ -300,6 +388,7 @@ def manage_movies(request):
     
     context = {
         'movies': movies,
+        'genres': genres,
         'search_query': search_query,
     }
     
@@ -320,7 +409,22 @@ def create_movie(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Movie created successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Movie created successfully!'
+                })
+            
             return redirect('manage_movies')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = MovieForm()
     
@@ -347,7 +451,22 @@ def edit_movie(request, movie_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Movie updated successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Movie updated successfully!'
+                })
+            
             return redirect('manage_movies')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = MovieForm(instance=movie)
     
@@ -416,7 +535,22 @@ def create_genre(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Genre created successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Genre created successfully!'
+                })
+            
             return redirect('manage_genres')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = GenreForm()
     
@@ -443,7 +577,22 @@ def edit_genre(request, genre_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Genre updated successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Genre updated successfully!'
+                })
+            
             return redirect('manage_genres')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = GenreForm(instance=genre)
     
@@ -537,6 +686,40 @@ def manage_reviews(request):
 
 
 @login_required
+def approve_review(request, review_id):
+    """
+    Admin - Approve review
+    """
+    if not request.user.is_admin():
+        messages.error(request, 'Access denied! Admin only.')
+        return redirect('home')
+    
+    review = get_object_or_404(Review, id=review_id)
+    review.is_approved = True
+    review.save()
+    
+    messages.success(request, 'Review approved successfully!')
+    return redirect('manage_reviews')
+
+
+@login_required
+def reject_review(request, review_id):
+    """
+    Admin - Reject review
+    """
+    if not request.user.is_admin():
+        messages.error(request, 'Access denied! Admin only.')
+        return redirect('home')
+    
+    review = get_object_or_404(Review, id=review_id)
+    review.is_approved = False
+    review.save()
+    
+    messages.success(request, 'Review rejected successfully!')
+    return redirect('manage_reviews')
+
+
+@login_required
 def delete_review(request, review_id):
     """
     Admin - Delete review
@@ -563,8 +746,17 @@ def manage_users(request):
     
     users = Account.objects.all().order_by('-created_at')
     
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
     context = {
         'users': users,
+        'search_query': search_query,
     }
     
     return render(request, 'Admin/manage_users.html', context)
@@ -584,7 +776,22 @@ def create_account(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Account created successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Account created successfully!'
+                })
+            
             return redirect('manage_users')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = AdminCreateAccountForm()
     
@@ -618,7 +825,22 @@ def edit_account(request, user_id):
             
             account.save()
             messages.success(request, 'Account updated successfully!')
+            
+            # Return JSON for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Account updated successfully!'
+                })
+            
             return redirect('manage_users')
+        else:
+            # Return JSON with errors for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
     else:
         form = AdminEditAccountForm(instance=user)
     
@@ -660,13 +882,35 @@ def admin_settings(request):
         messages.error(request, 'Access denied! Admin only.')
         return redirect('home')
     
+    from .models import SiteSetting
+    
+    # Get or create settings
+    settings = SiteSetting.get_settings()
+    
+    if request.method == 'POST':
+        # Update settings from form
+        settings.site_name = request.POST.get('site_name', settings.site_name)
+        settings.site_email = request.POST.get('site_email', settings.site_email)
+        settings.items_per_page = int(request.POST.get('items_per_page', settings.items_per_page))
+        
+        # Handle file upload
+        if request.FILES.get('site_logo'):
+            settings.site_logo = request.FILES['site_logo']
+        
+        # Handle checkboxes (they're only present if checked)
+        settings.enable_review = 'enable_review' in request.POST
+        settings.require_approval = 'require_approval' in request.POST
+        settings.enable_notification = 'enable_notification' in request.POST
+        settings.maintenance_mode = 'maintenance_mode' in request.POST
+        
+        settings.save()
+        
+        messages.success(request, 'Settings saved successfully!')
+        return redirect('admin_settings')
+    
     context = {
-        'total_movies': Movie.objects.count(),
-        'total_users': Account.objects.filter(role='user').count(),
-        'total_admins': Account.objects.filter(role='admin').count(),
-        'total_genres': Genre.objects.count(),
-        'total_bookings': Booking.objects.count(),
-        'total_reviews': Review.objects.count(),
+        'settings': settings,
     }
     
     return render(request, 'Admin/settings.html', context)
+

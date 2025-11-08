@@ -13,6 +13,7 @@ urlpatterns = [
     
     # Admin URLs (Changed from /admin/ to /dashboard/)
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/profile/', views.admin_profile, name='admin_profile'),
     
     # Admin - Movies
     path('dashboard/movies/', views.manage_movies, name='manage_movies'),
@@ -32,6 +33,8 @@ urlpatterns = [
     
     # Admin - Reviews
     path('dashboard/reviews/', views.manage_reviews, name='manage_reviews'),
+    path('dashboard/reviews/<int:review_id>/approve/', views.approve_review, name='approve_review'),
+    path('dashboard/reviews/<int:review_id>/reject/', views.reject_review, name='reject_review'),
     path('dashboard/reviews/<int:review_id>/delete/', views.delete_review, name='delete_review'),
     
     # Admin - Users

@@ -32,6 +32,9 @@
                     
                     <form method="post">
                         {% csrf_token %}
+                        {% if redirect_url %}
+                            <input type="hidden" name="next" value="{{ redirect_url }}">
+                        {% endif %}
                         
                         <div class="mb-3">
                             <label for="{{ form.rating.id_for_label }}" class="form-label">Rating</label>
@@ -53,9 +56,15 @@
                             <button type="submit" class="btn btn-warning btn-lg">
                                 <i class="bi bi-send"></i> {% if existing_review %}Update{% else %}Submit{% endif %} Review
                             </button>
-                            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Movie
-                            </a>
+                            {% if redirect_url %}
+                                <a href="{{ redirect_url }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to My Reviews
+                                </a>
+                            {% else %}
+                                <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Movie
+                                </a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>

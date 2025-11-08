@@ -8,7 +8,7 @@
         <!-- Movie Poster -->
         <div class="col-md-4">
             {% if movie.poster %}
-                <img src="{{ movie.poster.url }}" class="img-fluid rounded shadow" alt="{{ movie.title }}">
+                <img src="{{ movie.poster.url }}" class="rounded shadow w-100" alt="{{ movie.title }}" width="400" height="600" style="object-fit: cover;">
             {% else %}
                 <div class="bg-secondary text-white d-flex align-items-center justify-content-center rounded shadow" style="height: 500px;">
                     <i class="bi bi-film" style="font-size: 5rem;"></i>
@@ -33,7 +33,14 @@
                     <p><strong><i class="bi bi-calendar"></i> Release Date:</strong> {{ movie.release_date|date:"M d, Y" }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong><i class="bi bi-star-fill text-warning"></i> Rating:</strong> {{ movie.rating }}/10</p>
+                    <p><strong><i class="bi bi-star-fill text-warning"></i> Rating:</strong> 
+                        {{ movie.rating|floatformat }}/5
+                        {% if movie.get_review_count > 0 %}
+                            <small class="text-muted">({{ movie.get_review_count }} review{{ movie.get_review_count|pluralize }})</small>
+                        {% else %}
+                            <small class="text-muted">(No reviews yet)</small>
+                        {% endif %}
+                    </p>
                     <p><strong><i class="bi bi-currency-dollar"></i> Ticket Price:</strong> ${{ movie.ticket_price }}</p>
                     <p><strong><i class="bi bi-chair"></i> Available Seats:</strong> {{ movie.available_seats }}</p>
                 </div>
@@ -45,18 +52,23 @@
             <p>{{ movie.description }}</p>
             
             {% if movie.trailer_url %}
-            <p><a href="{{ movie.trailer_url }}" target="_blank" class="btn btn-outline-primary">
-                <i class="bi bi-play-circle"></i> Watch Trailer
-            </a></p>
+            <div class="mb-4">
+                <h5><i class="bi bi-play-circle"></i> Trailer</h5>
+                <div class="ratio ratio-16x9 rounded overflow-hidden shadow">
+                    <div id="player-{{ movie.id }}"></div>
+                </div>
+            </div>
             {% endif %}
             
             {% if user.is_authenticated and movie.is_available %}
                 <a href="{% url 'book_movie' movie.id %}" class="btn btn-success btn-lg">
                     <i class="bi bi-ticket-perforated"></i> Book Tickets
                 </a>
+                {% if enable_review %}
                 <a href="{% url 'review_movie' movie.id %}" class="btn btn-warning btn-lg">
                     <i class="bi bi-star"></i> Write Review
                 </a>
+                {% endif %}
             {% elif not user.is_authenticated %}
                 <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
                     <i class="bi bi-box-arrow-in-right"></i> Login to Book
@@ -66,6 +78,7 @@
     </div>
     
     <!-- Reviews Section -->
+    {% if enable_review %}
     <div class="row mt-5">
         <div class="col-12">
             <h3><i class="bi bi-chat-left-text"></i> Reviews</h3>
@@ -100,7 +113,14 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ review.created_at|date:"M d, Y" }}</small>
+                            {% if user.is_authenticated and review.user == user %}
+                                <a href="{% url 'review_movie' movie.id %}" class="btn btn-sm btn-outline-warning mt-1">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                     <p class="mb-0">{{ review.comment }}</p>
                 </div>
@@ -110,5 +130,53 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 </div>
+
+<!-- YouTube IFrame API --> 
+{% if movie.trailer_url %}
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    var player;
+    var playerReady = false;
+    
+    function onYouTubeIframeAPIReady() {
+        createPlayer();
+    }
+    
+    function createPlayer() {
+        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+            setTimeout(createPlayer, 100);
+            return;
+        }
+        
+        player = new YT.Player('player-{{ movie.id }}', {
+            videoId: '{{ movie.get_youtube_video_id }}',
+            playerVars: {
+                autoplay: 0,
+                mute: 0,
+                controls: 1,
+                rel: 0,
+                modestbranding: 1,
+                fs: 1
+            },
+            events: {
+                'onReady': onPlayerReady
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        playerReady = true;
+    }
+    
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            if (!playerReady) {
+                createPlayer();
+            }
+        }, 500);
+    });
+</script>
+{% endif %}
 {% endblock %}

@@ -136,7 +136,7 @@ class AdminEditAccountForm(forms.ModelForm):
     
     class Meta:
         model = Account
-        fields = ['username', 'email', 'role']
+        fields = ['username', 'email', 'role', 'is_active']
         widgets = {
             'username': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -147,6 +147,9 @@ class AdminEditAccountForm(forms.ModelForm):
                 'placeholder': 'Enter email'
             }),
             'role': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'is_active': forms.Select(attrs={
                 'class': 'form-control'
             }),
         }

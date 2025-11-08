@@ -3,83 +3,443 @@
 {% block title %}Home - Movie Management System{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="bg-dark text-white py-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="display-4"><i class="bi bi-film"></i> Welcome to Movie Management</h1>
-                <p class="lead">Discover and book your favorite movies online</p>
-                <a href="{% url 'movie_list' %}" class="btn btn-primary btn-lg">Browse Movies</a>
-            </div>
+<!-- Hero Section with Featured Movie -->
+{% if featured_movie %}
+<div class="hero-section text-white position-relative" style="min-height: 600px; overflow: hidden;">
+    <!-- Video/Trailer Background -->
+    {% if featured_movie.trailer_url %}
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="z-index: 0; overflow: hidden;">
+            <div id="player-{{ featured_movie.id }}" style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%);"></div>
         </div>
-    </div>
-</div>
-
-<!-- Now Showing -->
-<div class="container my-5">
-    <h2 class="mb-4"><i class="bi bi-camera-reels"></i> Now Showing</h2>
-    <div class="row">
-        {% for movie in now_showing %}
-        <div class="col-md-4 mb-4">
-            <div class="card shadow h-100">
-                {% if movie.poster %}
-                    <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 400px; object-fit: cover;">
-                {% else %}
-                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 400px;">
-                        <i class="bi bi-film" style="font-size: 4rem;"></i>
-                    </div>
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ movie.title }}</h5>
-                    <p class="card-text text-muted">
-                        <i class="bi bi-person"></i> {{ movie.director }}<br>
-                        <i class="bi bi-clock"></i> {{ movie.duration }} min<br>
-                        <i class="bi bi-star-fill text-warning"></i> {{ movie.rating }}/10
-                    </p>
-                    <p class="card-text">{{ movie.description|truncatewords:15 }}</p>
+    {% else %}
+        <!-- Fallback: Poster background if no trailer -->
+        <div class="position-absolute top-0 start-0 w-100 h-100" style="z-index: 0;">
+            {% if featured_movie.poster %}
+                <img src="{{ featured_movie.poster.url }}" alt="{{ featured_movie.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <!-- Dark overlay for readability -->
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.65) 100%); z-index: 1;"></div>
+    
+    <!-- Content -->
+    <div class="container position-relative py-5" style="z-index: 2;">
+        <div class="row align-items-center py-5">
+            <div class="col-lg-7">
+                <div class="badge bg-danger mb-3 px-3 py-2">
+                    <i class="bi bi-star-fill"></i> FEATURED
                 </div>
-                <div class="card-footer bg-transparent">
-                    <a href="{% url 'movie_detail' movie.id %}" class="btn btn-primary btn-sm">View Details</a>
+                <h1 class="display-3 fw-bold mb-3">{{ featured_movie.title }}</h1>
+                <div class="mb-3">
+                    <span class="badge bg-warning text-dark me-2 px-3 py-2">
+                        <i class="bi bi-star-fill"></i> {{ featured_movie.rating|floatformat }}
+                        {% if featured_movie.get_review_count > 0 %}
+                            <small class="ms-1">({{ featured_movie.get_review_count }} review{{ featured_movie.get_review_count|pluralize }})</small>
+                        {% else %}
+                            <small class="ms-1">(No reviews)</small>
+                        {% endif %}
+                    </span>
+                    <span class="badge bg-info text-dark me-2 px-3 py-2">
+                        <i class="bi bi-calendar"></i> {{ featured_movie.release_date|date:"Y" }}
+                    </span>
+                    <span class="badge bg-secondary me-2 px-3 py-2">
+                        <i class="bi bi-clock"></i> {{ featured_movie.duration }} min
+                    </span>
+                    <span class="badge px-3 py-2" style="background: rgba(102, 126, 234, 0.95);">
+                        {{ featured_movie.genre.name }}
+                    </span>
+                </div>
+                <p class="lead mb-3" style="font-size: 1.1rem; line-height: 1.8;">
+                    {{ featured_movie.description|truncatewords:35 }}
+                </p>
+                <div class="mb-3">
+                    <p class="mb-2"><i class="bi bi-person-circle"></i> <strong>Director:</strong> {{ featured_movie.director }}</p>
+                    <p class="mb-0"><i class="bi bi-people-fill"></i> <strong>Cast:</strong> {{ featured_movie.cast|truncatewords:15 }}</p>
+                </div>
+                <div class="d-flex gap-3 flex-wrap mt-4">
+                    {% if featured_movie.trailer_url %}
+                        <a href="{{ featured_movie.trailer_url }}" target="_blank" class="btn btn-danger btn-lg px-4">
+                            <i class="bi bi-play-circle-fill"></i> Watch Trailer
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'movie_detail' featured_movie.id %}" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-info-circle"></i> More Info
+                    </a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'book_movie' movie.id %}" class="btn btn-success btn-sm">Book Now</a>
+                        <a href="{% url 'book_movie' featured_movie.id %}" class="btn btn-success btn-lg px-4">
+                            <i class="bi bi-ticket-perforated"></i> Book Now - ${{ featured_movie.ticket_price }}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-success btn-lg px-4">
+                            <i class="bi bi-box-arrow-in-right"></i> Login to Book
+                        </a>
                     {% endif %}
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <p class="text-muted">No movies available at the moment.</p>
-        </div>
-        {% endfor %}
     </div>
 </div>
-
-<!-- Coming Soon -->
-{% if coming_soon %}
-<div class="container my-5">
-    <h2 class="mb-4"><i class="bi bi-calendar-event"></i> Coming Soon</h2>
-    <div class="row">
-        {% for movie in coming_soon %}
-        <div class="col-md-4 mb-4">
-            <div class="card shadow h-100">
-                {% if movie.poster %}
-                    <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 300px; object-fit: cover;">
-                {% else %}
-                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 300px;">
-                        <i class="bi bi-film" style="font-size: 3rem;"></i>
-                    </div>
+{% else %}
+<!-- No Movies Available -->
+<div class="hero-section text-white py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 400px;">
+    <div class="container h-100">
+        <div class="row align-items-center h-100 py-5">
+            <div class="col-md-8 text-center mx-auto">
+                <i class="bi bi-film" style="font-size: 5rem; opacity: 0.8;"></i>
+                <h1 class="display-3 fw-bold mb-3 mt-4">Welcome to CinemaHub</h1>
+                <p class="lead fs-4 mb-4">Your Ultimate Movie Booking Experience</p>
+                <p class="fs-5 mb-4 text-white-50">No movies are currently showing. Check back soon for exciting new releases!</p>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-lg px-4">
+                        <i class="bi bi-plus-circle"></i> Add Movies
+                    </a>
                 {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ movie.title }}</h5>
-                    <p class="card-text text-muted">
-                        <i class="bi bi-calendar"></i> Release: {{ movie.release_date|date:"M d, Y" }}
-                    </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Genre Filter Section -->
+{% if genres %}
+<div class="bg-light py-3">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
+            <span class="fw-bold text-muted me-2" style="font-size: 0.9rem;">
+                <i class="bi bi-funnel-fill"></i> Filter by Genre:
+            </span>
+            <a href="{% url 'movie_list' %}" class="badge text-decoration-none px-3 py-2 genre-badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 0.85rem; transition: all 0.3s;">
+                <i class="bi bi-grid-3x3-gap"></i> All Movies
+            </a>
+            {% for genre in genres %}
+                <a href="{% url 'movie_list' %}?genre={{ genre.id }}" class="badge bg-secondary text-decoration-none px-3 py-2 genre-badge" style="font-size: 0.85rem; transition: all 0.3s;">
+                    {{ genre.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Now Showing Section -->
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i class="bi bi-camera-reels text-primary"></i> Now Showing
+        </h2>
+        <a href="{% url 'movie_list' %}" class="btn btn-outline-primary">
+            View All <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    
+    {% if now_showing %}
+    <div class="row g-3">
+        {% for movie in now_showing %}
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+            <div class="card shadow-sm h-100 movie-card" style="border-radius: 10px; overflow: hidden; transition: all 0.3s;">
+                <div class="position-relative">
+                    {% if movie.poster %}
+                        <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 240px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 240px;">
+                            <i class="bi bi-film" style="font-size: 2rem;"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Rating Badge -->
+                    <div class="position-absolute top-0 end-0 m-1 me-3">
+                        <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.7rem;" title="{{ movie.get_review_count }} review{{ movie.get_review_count|pluralize }}">
+                            <i class="bi bi-star-fill"></i> {{ movie.rating|floatformat }}
+                            {% if movie.get_review_count > 0 %}
+                                <small style="font-size: 0.6rem;">({{ movie.get_review_count }})</small>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body px-3 py-2 d-flex flex-column">
+                    <h6 class="card-title fw-bold mb-1 text-truncate" style="font-size: 0.85rem;" title="{{ movie.title }}">{{ movie.title }}</h6>
+                    
+                    <!-- Genre and Year Badges -->
+                    <div class="d-flex align-items-center gap-1 mb-2 flex-wrap">
+                        <a href="{% url 'movie_list' %}?genre={{ movie.genre.id }}" class="badge text-decoration-none" style="background: rgba(102, 126, 234, 0.95); color: white; font-size: 0.65rem; padding: 5px 12px;">
+                            {{ movie.genre.name }}
+                        </a>
+                        <span class="badge bg-secondary" style="font-size: 0.65rem; padding: 5px 12px;">
+                            {{ movie.release_date|date:"Y" }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-1" style="font-size: 0.7rem;">
+                        <p class="card-text text-muted mb-1">
+                            <i class="bi bi-person"></i> {{ movie.director|truncatechars:15 }}
+                        </p>
+                        <p class="card-text text-muted mb-0">
+                            <i class="bi bi-clock"></i> {{ movie.duration }} min
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top">
+                        <span class="h6 text-primary mb-0 fw-bold" style="font-size: 0.85rem;">
+                            ${{ movie.ticket_price }}
+                        </span>
+                        <span class="badge bg-info text-dark" style="font-size: 0.65rem;">
+                            <i class="bi bi-people"></i> {{ movie.available_seats }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-0 d-flex gap-1 px-3 py-2">
+                    <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-primary btn-sm flex-fill" style="font-size: 0.7rem; padding: 4px 8px;">
+                        <i class="bi bi-info-circle"></i> Details
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'book_movie' movie.id %}" class="btn btn-success btn-sm flex-fill" style="font-size: 0.7rem; padding: 4px 8px;">
+                            <i class="bi bi-ticket"></i> Book
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={% url 'book_movie' movie.id %}" class="btn btn-success btn-sm flex-fill" style="font-size: 0.7rem; padding: 4px 8px;">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <i class="bi bi-film" style="font-size: 3rem;"></i>
+        <h4 class="mt-3">No Movies Currently Showing</h4>
+        <p class="text-muted">Check back soon for new releases!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Coming Soon Section -->
+{% if coming_soon %}
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">
+                <i class="bi bi-calendar-event text-success"></i> Coming Soon
+            </h2>
+        </div>
+        
+        <div class="row g-3">
+            {% for movie in coming_soon %}
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                <div class="card shadow-sm h-100 movie-card" style="border-radius: 10px; overflow: hidden; transition: all 0.3s;">
+                    <div class="position-relative">
+                        {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 240px; object-fit: cover; filter: brightness(0.85);">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 240px;">
+                                <i class="bi bi-film" style="font-size: 2rem;"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Coming Soon Badge -->
+                        <div class="position-absolute top-50 start-50 translate-middle">
+                            <span class="badge bg-success fw-bold px-2 py-1" style="font-size: 0.7rem;">
+                                <i class="bi bi-clock-history"></i> COMING SOON
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body px-3 py-2">
+                        <h6 class="card-title fw-bold mb-1 text-truncate" style="font-size: 0.85rem;" title="{{ movie.title }}">{{ movie.title }}</h6>
+                        
+                        <!-- Genre and Year Badges -->
+                        <div class="d-flex align-items-center gap-1 mb-2 flex-wrap">
+                            <a href="{% url 'movie_list' %}?genre={{ movie.genre.id }}" class="badge text-decoration-none" style="background: rgba(25, 135, 84, 0.95); color: white; font-size: 0.65rem; padding: 5px 12px;">
+                                {{ movie.genre.name }}
+                            </a>
+                            <span class="badge bg-secondary" style="font-size: 0.65rem; padding: 5px 12px;">
+                                {{ movie.release_date|date:"Y" }}
+                            </span>
+                        </div>
+                        
+                        <p class="card-text text-muted mb-1" style="font-size: 0.7rem;">
+                            <i class="bi bi-calendar3 text-success"></i> {{ movie.release_date|date:"M d, Y" }}
+                        </p>
+                        <p class="card-text text-muted mb-0" style="font-size: 0.7rem;">
+                            <i class="bi bi-person"></i> {{ movie.director|truncatechars:15 }}
+                        </p>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-0 px-3 py-2">
+                        <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-success btn-sm w-100" style="font-size: 0.7rem; padding: 4px 8px;">
+                            <i class="bi bi-info-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endif %}
+
+<!-- Call to Action Section -->
+<div class="container mb-5 py-5">
+    <div class="row justify-content-center text-center">
+        <div class="col-lg-8">
+            <h2 class="display-5 fw-bold mb-3">Ready to Watch?</h2>
+            <p class="lead text-muted mb-4">
+                Join thousands of movie lovers. Book your tickets now and enjoy the best cinema experience!
+            </p>
+            {% if not user.is_authenticated %}
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-person-plus"></i> Sign Up Now
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-5">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </a>
+            </div>
+            {% else %}
+            <a href="{% url 'movie_list' %}" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-collection-play"></i> Explore All Movies
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS for Hover Effects -->
+<style>
+    .movie-card {
+        transition: all 0.3s ease;
+    }
+    
+    .movie-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+        background-size: cover;
+    }
+    
+    .badge {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Genre badge hover effect */
+    .movie-card .position-absolute .badge {
+        transition: all 0.3s ease;
+    }
+    
+    .movie-card:hover .position-absolute .badge {
+        transform: scale(1.05);
+    }
+    
+    .movie-card .position-absolute a.badge:hover {
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        opacity: 1 !important;
+    }
+    
+    /* Card title truncate on hover */
+    .card-title {
+        transition: color 0.2s ease;
+    }
+    
+    .movie-card:hover .card-title {
+        color: #667eea !important;
+    }
+    
+    /* Genre filter badges hover */
+    .genre-badge {
+        border-radius: 20px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .genre-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0.9;
+    }
+</style>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    {% if featured_movie.trailer_url %}
+    var player;
+    var playerReady = false;
+    
+    // This function will be called when the API is ready
+    function onYouTubeIframeAPIReady() {
+        createPlayer();
+    }
+    
+    function createPlayer() {
+        if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+            // API not loaded yet, wait and retry
+            setTimeout(createPlayer, 100);
+            return;
+        }
+        
+        player = new YT.Player('player-{{ featured_movie.id }}', {
+            videoId: '{{ featured_movie.get_youtube_video_id }}',
+            playerVars: {
+                autoplay: 1,
+                mute: 1,
+                controls: 0,
+                showinfo: 0,
+                rel: 0,
+                loop: 1,
+                playlist: '{{ featured_movie.get_youtube_video_id }}',
+                modestbranding: 1,
+                iv_load_policy: 3,
+                disablekb: 1,
+                fs: 0
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        playerReady = true;
+        event.target.playVideo();
+        event.target.mute();
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED) {
+            event.target.playVideo();
+        }
+    }
+    
+    // Fallback: If API doesn't load via callback, try after page load
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            if (!playerReady) {
+                createPlayer();
+            }
+        }, 500);
+    });
+    {% endif %}
+</script>
 {% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'Admin/base_admin.html' %}
+
+{% block title %}Admin Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div>
+            <!-- Profile Header Card -->
+            <div class="card shadow-lg" style="border-radius: 15px;">
+                <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px 15px 0 0;">
+                    <i class="bi bi-shield-fill-check" style="font-size: 5rem;"></i>
+                    <h3 class="mt-3 mb-0">{{ user.username }}</h3>
+                    <p class="mb-0"><i class="bi bi-envelope-fill"></i> {{ user.email }}</p>
+                    <span class="badge bg-danger mt-2 px-4 py-2" style="font-size: 1rem;">
+                        <i class="bi bi-star-fill"></i> ADMINISTRATOR
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="mb-4"><i class="bi bi-info-circle-fill text-danger"></i> Account Information</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); border-left: 4px solid #f5576c;">
+                                <p class="text-muted mb-1"><small><i class="bi bi-person-badge"></i> USERNAME</small></p>
+                                <h6 class="mb-0 fw-bold">{{ user.username }}</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); border-left: 4px solid #f5576c;">
+                                <p class="text-muted mb-1"><small><i class="bi bi-envelope"></i> EMAIL ADDRESS</small></p>
+                                <h6 class="mb-0 fw-bold">{{ user.email }}</h6>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); border-left: 4px solid #f5576c;">
+                                <p class="text-muted mb-1"><small><i class="bi bi-shield-check"></i> ACCOUNT ROLE</small></p>
+                                <h6 class="mb-0">
+                                    <span class="badge bg-danger" style="font-size: 0.9rem;">
+                                        <i class="bi bi-star-fill"></i> {{ user.get_role_display }}
+                                    </span>
+                                </h6>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 rounded" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); border-left: 4px solid #f5576c;">
+                                <p class="text-muted mb-1"><small><i class="bi bi-calendar-check"></i> MEMBER SINCE</small></p>
+                                <h6 class="mb-0 fw-bold">{{ user.created_at|date:"F d, Y" }}</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

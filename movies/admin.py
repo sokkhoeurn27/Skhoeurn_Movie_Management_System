@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Genre, Movie, Booking, Review
+from .models import Genre, Movie, Booking, Review, SiteSetting
 
 
 @admin.register(Genre)
@@ -33,3 +33,16 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ['rating', 'created_at']
     search_fields = ['user__username', 'movie__title', 'comment']
     ordering = ['-created_at']
+
+
+@admin.register(SiteSetting)
+class SiteSettingAdmin(admin.ModelAdmin):
+    list_display = ['site_name', 'site_email', 'enable_review', 'maintenance_mode', 'updated_at']
+    
+    def has_add_permission(self, request):
+        # Only allow one settings instance
+        return not SiteSetting.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Don't allow deletion of settings
+        return False

@@ -6,9 +6,9 @@
 <div class="container-fluid my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-film"></i> Manage Movies</h2>
-        <a href="{% url 'create_movie' %}" class="btn btn-primary">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMovieModal">
             <i class="bi bi-plus-circle"></i> Add New Movie
-        </a>
+        </button>
     </div>
     
     <div class="card shadow mb-3">
@@ -80,10 +80,10 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{% url 'edit_movie' movie.id %}" class="btn btn-sm btn-warning">
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editMovieModal{{ movie.id }}" title="Edit">
                                     <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="{% url 'delete_movie' movie.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                </button>
+                                <a href="{% url 'delete_movie' movie.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>
@@ -99,4 +99,352 @@
         </div>
     </div>
 </div>
+
+<!-- Add Movie Modal -->
+<div class="modal fade" id="addMovieModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Movie</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'create_movie' %}" id="addMovieForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="addMovieErrors" class="d-none mb-3"></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Genre <span class="text-danger">*</span></label>
+                            <select class="form-select" name="genre" required>
+                                <option value="">Select Genre</option>
+                                {% for genre in genres %}
+                                <option value="{{ genre.id }}">{{ genre.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Director <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="director" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Cast <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="cast" placeholder="Comma-separated names" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Duration (minutes) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="duration" min="1" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Release Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="release_date" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Rating</label>
+                            <input type="number" class="form-control" name="rating" min="0" max="10" step="0.1" value="0.0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Ticket Price ($) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="ticket_price" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Available Seats <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="available_seats" min="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" name="status" required>
+                                <option value="now_showing">Now Showing</option>
+                                <option value="coming_soon">Coming Soon</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Poster Image</label>
+                            <input type="file" class="form-control" name="poster" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Trailer URL</label>
+                            <input type="url" class="form-control" name="trailer_url" placeholder="https://youtube.com/...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Create Movie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Movie Modals -->
+{% for movie in movies %}
+<div class="modal fade" id="editMovieModal{{ movie.id }}" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Movie: {{ movie.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'edit_movie' movie.id %}" class="editMovieForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="edit-movie-errors d-none mb-3"></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" value="{{ movie.title }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Genre <span class="text-danger">*</span></label>
+                            <select class="form-select" name="genre" required>
+                                <option value="">Select Genre</option>
+                                {% for genre in genres %}
+                                <option value="{{ genre.id }}" {% if movie.genre.id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="description" rows="3" required>{{ movie.description }}</textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Director <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="director" value="{{ movie.director }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Cast <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="cast" value="{{ movie.cast }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Duration (minutes) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="duration" value="{{ movie.duration }}" min="1" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Release Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="release_date" value="{{ movie.release_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Rating</label>
+                            <input type="number" class="form-control" name="rating" value="{{ movie.rating }}" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Ticket Price ($) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="ticket_price" value="{{ movie.ticket_price }}" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Available Seats <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="available_seats" value="{{ movie.available_seats }}" min="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" name="status" required>
+                                <option value="now_showing" {% if movie.status == 'now_showing' %}selected{% endif %}>Now Showing</option>
+                                <option value="coming_soon" {% if movie.status == 'coming_soon' %}selected{% endif %}>Coming Soon</option>
+                                <option value="archived" {% if movie.status == 'archived' %}selected{% endif %}>Archived</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Poster Image</label>
+                            {% if movie.poster %}
+                            <div class="mb-2">
+                                <small class="text-muted">Current: {{ movie.poster.name }}</small>
+                            </div>
+                            {% endif %}
+                            <input type="file" class="form-control" name="poster" accept="image/*">
+                            <small class="text-muted">Leave empty to keep current poster</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Trailer URL</label>
+                            <input type="url" class="form-control" name="trailer_url" value="{{ movie.trailer_url|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-check-circle"></i> Update Movie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Movie Form AJAX Submission
+    document.getElementById('addMovieForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const errorContainer = document.getElementById('addMovieErrors');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating...';
+        
+        errorContainer.innerHTML = '';
+        errorContainer.classList.add('d-none');
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json().then(data => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addMovieModal'));
+                    modal.hide();
+                    
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-check-circle-fill"></i> ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                    
+                    setTimeout(() => location.reload(), 1000);
+                });
+            } else {
+                return response.json().then(errorData => {
+                    if (errorData.errors.__all__) {
+                        errorContainer.innerHTML = `
+                            <div class="alert alert-danger mb-0">
+                                <i class="bi bi-exclamation-triangle-fill"></i> ${errorData.errors.__all__.join('<br>')}
+                            </div>
+                        `;
+                        errorContainer.classList.remove('d-none');
+                    }
+                    
+                    for (const [field, errors] of Object.entries(errorData.errors)) {
+                        if (field !== '__all__') {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'invalid-feedback d-block';
+                                errorDiv.textContent = errors.join(', ');
+                                input.parentNode.appendChild(errorDiv);
+                            }
+                        }
+                    }
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Movie';
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            errorContainer.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> An unexpected error occurred. Please try again.
+                </div>
+            `;
+            errorContainer.classList.remove('d-none');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Create Movie';
+        });
+    });
+    
+    // Edit Movie Forms AJAX Submission
+    document.querySelectorAll('.editMovieForm').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const movieId = this.closest('.modal').id.replace('editMovieModal', '');
+            const errorContainer = this.querySelector('.edit-movie-errors');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+            
+            errorContainer.innerHTML = '';
+            errorContainer.classList.add('d-none');
+            this.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            this.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json().then(data => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editMovieModal' + movieId));
+                        modal.hide();
+                        
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="bi bi-check-circle-fill"></i> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                        
+                        setTimeout(() => location.reload(), 1000);
+                    });
+                } else {
+                    return response.json().then(errorData => {
+                        if (errorData.errors.__all__) {
+                            errorContainer.innerHTML = `
+                                <div class="alert alert-danger mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> ${errorData.errors.__all__.join('<br>')}
+                                </div>
+                            `;
+                            errorContainer.classList.remove('d-none');
+                        }
+                        
+                        for (const [field, errors] of Object.entries(errorData.errors)) {
+                            if (field !== '__all__') {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('is-invalid');
+                                    const errorDiv = document.createElement('div');
+                                    errorDiv.className = 'invalid-feedback d-block';
+                                    errorDiv.textContent = errors.join(', ');
+                                    input.parentNode.appendChild(errorDiv);
+                                }
+                            }
+                        }
+                        
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Movie';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorContainer.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i> An unexpected error occurred. Please try again.
+                    </div>
+                `;
+                errorContainer.classList.remove('d-none');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Movie';
+            });
+        });
+    });
+</script>
 {% endblock %}
